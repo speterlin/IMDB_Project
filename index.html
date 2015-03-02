@@ -1,0 +1,610 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+    <title>Sample</title>
+
+    <style type="text/css">
+        table tr { vertical-align: top; }
+        table td { padding: 3px; }
+        div.contentblock { padding-bottom: 25px; }  
+        #uploadprogressbar { display: none; }
+    </style>
+
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.min.js"></script>
+    <script type="text/javascript" language="javascript">
+    $(document).ready(function() {
+        /*
+        window.onload = function () {
+            
+        }
+        */
+        var iframe = "<iframe src='./comment_frame.php?id=$id' frameborder='0' style='max-height:150px; height:auto;width:90%;min-height:10px;'></iframe>";
+
+        $("#movieSearchButton").click(function() {
+            //var movie_query = $("#movie").val();
+            //logInToIMDB();
+            console.log($("#movie").val());
+            if ($("#movie").val()) {
+                movieSearch($("#movie").val());
+            } else {
+                alert("Please Enter a movie title in the search text field!");
+            }
+        })
+        $("#actorSearchButton").click(function() {
+            //var actor_query = $("#actor").val();
+            if ($("#actor").val()) {
+                actorSearch($("#actor").val());
+            } else {
+                alert("Please Enter an actor name in the search text field!");
+            }
+        }) 
+    });
+
+    //Useful techniques
+    //allowing you to click on a tag without refreshing page #Exit
+    //Providing different values for onclick function in for loop
+    //pushing contents of a div to a function and parsing through the contents of the div
+
+    //Global Variables
+    var moviesBasicForActor = [];
+    var moviesDataForActor = [];
+    var actor = "";
+    var actor_id = "";
+    var stopMovieLoad = false;
+    var user_id = "";
+    
+    //getting log in information for user
+    function createCORSRequest(method, url){
+        document.domain = "imdb.com";
+        var xhr = new XMLHttpRequest();
+        if ("withCredentials" in xhr){
+            xhr.open(method, url, true);
+        } else if (typeof XDomainRequest != "undefined"){
+            xhr = new XDomainRequest();
+            xhr.open(method, url);
+        } else {
+            xhr = null;
+        }
+        return xhr;
+    }
+
+    var request = createCORSRequest("get", "http://www.stackoverflow.com/");
+    if (request){
+        request.onload = function() {
+            // ...
+        };
+        request.onreadystatechange = true;
+        request.send();
+    }
+        /*
+    function logInToIMDB () {
+        $.ajax ({
+            type: 'POST',
+            url: 'https://secure.imdb.com/register-imdb/login?ref_=nv_usr_lgin_1',
+            dataType: 'html',
+            success: function(data) {
+                $(data).find('#usernameprompt').value('hello');
+                console.log($(data).find('#usernameprompt'));
+            }
+        })
+    }
+        */
+
+    //getting movie gross
+    //button will create a new category in moviesDataForActor called Box Office and populate it for each movie
+
+    function getMovieBoxOffice (movie_id) {
+        var result = "";
+        $.ajax ({
+            type: 'GET',
+            url: "imdb-fetcher7.php?movie_id=" + movie_id, // <-- request to PHP data fetcher
+            async: false,
+            dataType: "html",
+            success: function(data) { 
+                //console.log(data);
+                //output contents of div topphim
+                //console.log("below is the main div in which the film name title is in");
+                //console.log($(data).find('div#titleDetails'));
+                //console.log($(data).find(".topphim"));
+                //console.log($(data).find("cite._Rm").find("b")[0]);
+                console.log("below is the filmname, if this is present then there is a movie available");
+                event = $(data).find('div#titleDetails').text().trim().replace(/\s\s+/g, ' ');
+                //console.log(event);
+                //finding the amount value by looking for Grosss
+                var grossBoxOffice = event.match(/Gross:\s*[^\d]*[\d|,]*/i)[0];
+                //taking out the Gross part
+                result = grossBoxOffice.match(/\s+[^\d]*[\d|,]*/i)[0];
+                console.log(result);
+                //result = grossBoxOffice;
+                /*$(data).find('div#titleDetails').function(child) {
+                    console.log(child.text());
+                };
+                */
+                //console.log($(data).find(".FilmName"));
+                //console.log("below should show if there are no movie results");
+                //console.log($(data).find(".topphim").find("center").text());
+                //console.log("below should show if there are movie results");
+                //console.log($(data).find(".topphim").find(".FilmName"));
+            }
+        })
+        return result;
+    }
+
+    //getMovieShare movie
+    //issue with getting info from movieshare.info, just brings me to main page, not the search results page
+    function getMovieShare (movie_title) {
+        $.ajax ({
+            type: 'GET',
+            url: "imdb-fetcher6.php?movie_title=" + movie_title, // <-- request to PHP data fetcher
+            dataType: "html",
+            success: function(data) { 
+                //console.log(data);
+                //output contents of div topphim
+                //console.log("below is the main div in which the film name title is in");
+                //console.log($(data).find(".topphim"));
+                //console.log($(data).find("cite._Rm").find("b")[0]);
+                //console.log("below is the filmname, if this is present then there is a movie available");
+                //console.log($(data).find(".FilmName"));
+                //console.log("below should show if there are no movie results");
+                //console.log($(data).find(".topphim").find("center").text());
+                //console.log("below should show if there are movie results");
+                //console.log($(data).find(".topphim").find(".FilmName"));
+            }
+        })
+    }
+
+    //getting Trailer
+    function getTrailer (movie_id) {
+        $.ajax ({
+            type: 'GET',
+            url: "imdb-fetcher5.php?movie_id=" + movie_id, // <-- request to PHP data fetcher
+            dataType: "html",
+            success: function(data) { 
+                //console.log($(data));
+                //console.log($(data).find('#overview-bottom'));
+                
+                //getting the link for the trailer
+                var link = $(data).find('#overview-bottom').children('a').attr('href');
+                if (link) {
+                    var url = 'http://www.imdb.com/' + link;
+                    window.open(url, '_blank');
+                } else {
+                    alert ('There is no trailer for this selection');
+                }
+            }
+        })
+    }
+
+    // The function below takes the entered title and searchs imdb for a match then it displays as followed
+    function getMovieData (movie_id) {
+        var result = "";
+        $.ajax ({
+            type: 'GET',
+            url: "imdb-fetcher4.php?movie_id=" + movie_id, // <-- request to PHP data fetcher
+            async: false,
+            dataType: "json",
+            success: function(data) {
+                //will use all categories returned from this json object
+                
+                //console.log(data);
+                result = data;
+            }
+        })
+        return result;
+    }
+
+    //displaying movie data
+    function displayMovieData(movie_id) {
+        var movieDataJson = getMovieData(movie_id);
+        //also want to get movie box office for the movie
+        movieDataJson.BoxOffice = getMovieBoxOffice(movie_id);
+        //creating movieData div that will hold everything
+        var str = "<div id='movieData' ><b>Movie Data</b>";
+        //adding poster image floating right
+        str+= "<img src='"+movieDataJson.Poster+"' style='width:210px;height:350px;float:right;' alt='Image Not Found'</img>";
+
+        //creating list to display movie infor
+        str+= "<ul id='movieInfo' style='list-style:none;padding:0;'><li><button type='text' id='getTrailerButton' onclick='getTrailer(\""+movieDataJson.imdbID+"\")'>Get Trailer</button> </li>";
+
+        //displaying all the different categories in the JSON object
+        for (var event in movieDataJson) {
+            if (event == "Poster" || event == "Response") {
+                //do not display these categories
+            } else {
+                str += "<li><b>"+event+":</b> "+ movieDataJson[event]+"</li>";
+            } 
+        }
+        str+= "</div>";
+        
+        //showing the popup
+        $("#popup").html(str);
+        $("#popup").show();
+       
+    }
+
+    //sorting by gross box office revenue
+    function sortByBoxOffice() {
+        //removing the div if already there
+        $(".moviesSortedByRating").remove();
+        $(".moviesSortedByBoxOffice").remove();
+
+        //sorting movie by imdbRating
+        moviesDataForActor.sort(function(a,b) {
+            return (parseFloat(b.BoxOffice.match(/[\d|,]*/i)[0]) - a.BoxOffice.match(/[\d|,]*/i)[0]);
+        })
+        //console.log(moviesDataForActor);
+        
+        //creating div for moviesSort
+        var str = "<div class='moviesSortedByBoxOffice'><b>Movies Sorted by Gross Box Office Amount, "+actor+"</b></br>";
+        
+        //displaying moviesDataForActor
+        moviesDataForActor.map(function(value) {
+            str += "<a href='#Exit' onClick='return displayMovieData(\""+value.imdbID+"\"); return false'>"+value.Title+ " ("+value.Released+"), Gross Box Office: "+value.BoxOffice+"</a></br>";
+        })
+        str+= "</div>";
+
+        //displaying div
+        $(".moviesForActor").html(str);
+    }
+
+
+    //sorting by imdb rating
+    function sortByRating() {
+        //removing the div if already there
+        $(".moviesSortedByRating").remove();
+
+        //sorting movie by imdbRating
+        moviesDataForActor.sort(function(a,b) {
+            return (parseFloat(b.imdbRating) - parseFloat(a.imdbRating));
+        })
+        //console.log(moviesDataForActor);
+        
+        //creating div for moviesSort
+        var str = "<div class='moviesSortedByRating'><b>Movies Sorted by IMDB Rating for "+actor+"</b></br>";
+        
+        //displaying moviesDataForActor
+        moviesDataForActor.map(function(value) {
+            str += "<a href='#Exit' onClick='return displayMovieData(\""+value.imdbID+"\"); return false'>"+value.Title+ " ("+value.Released+"), Rating: "+value.imdbRating+"</a></br>";
+        })
+        str+= "</div>";
+
+        //displaying div
+        $(".moviesForActor").html(str);
+    }
+
+    //stoping the movie Load
+    function stopMovieLoadFn() {
+        stopMovieLoad = true;
+    }
+
+    //loading movieData
+    function loadMovieData() {
+
+        //setting movie counter to 0
+        var counter=0;
+        //clearing the moviesDataForActor array
+        moviesDataForActor = [];
+
+        //Progress Load Bar
+        $("#progressBar").show();
+        $("#stopMovieLoadButton").show();
+
+        //console.log(counter,moviesBasicForActor.length,stopMovieLoad);
+        (function asyncLoop() {
+            //console.log(stopMovieLoad);
+            //console.log(counter);
+
+            //updating progress Bar display and status
+            $("#progressBar").val((counter++/moviesBasicForActor.length)*100);
+            $("#status").html(counter + " out of " + moviesBasicForActor.length + " movies");
+
+            //stoping counter if reach end of array or person has clicked stop Load
+            if (counter <= moviesBasicForActor.length && stopMovieLoad == false) {
+                var input = getMovieData(moviesBasicForActor[counter-1].imdbID);
+                moviesDataForActor.push(input);
+                //console.log(input);
+                setTimeout(asyncLoop, 0);
+            } else {
+                //creating sort buttons
+                var button = "<div class='sortButtons'>";
+                //sort by rating
+                button += "<button type='text' id='movieSortByRating' onclick='sortByRating()'>Sort by IMDB Rating</button><button type='text' id='moviesSortByBoxOffice' onclick='sortByBoxOffice()'>Sort by Gross Box Office</button>";
+                
+                button+= "</div>";
+                //if stop load button has been pressed 
+                if (stopMovieLoad == true) {
+                    clearTimeout(asyncLoop);
+                    stopMovieLoad = false;
+                }  else { //if have gone through all elements of array
+                    
+                    //hiding Progress load buttons
+                    $("#loadMovieDataButton").hide();
+                    $("#progressBar").hide();
+                    $("#stopMovieLoadButton").hide();
+
+                    //appending sortByRating Button
+                    $(".loadMovieData").append(button);
+
+                    //writing that load has been completed
+                    $("#status").html("Load Complete");
+                    
+                    //changing the global variable back
+                    stopMovieLoad = false;
+                }
+            }
+        })();
+    }
+        
+    //filtering out all of the titles that are not movies
+    //TV Series, TV Mini-Series, Video Game, (... short), TV Movie, Video
+    function filterForMovie (movie_div_text) {
+        if (movie_div_text.match(/TV Series/i) == null && movie_div_text.match(/TV Mini-Series/i) == null && movie_div_text.match(/Video Game/i) == null && movie_div_text.match(/\(\w*\s*short\)/i) == null && movie_div_text.match(/TV Movie/i) == null && movie_div_text.match(/\(Video\)/i) == null) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
+    //this will display html movie results, inputs are div element and filmography string (ie Actor, Soundtrack...)
+    function getBasicMovieArray (filmography_div,filmography) {
+        
+        //clearing out existing stuff
+        $('.loadMovieData').remove();
+        $('.moviesForActor').remove();
+
+        //clearing out moviesBasicForActor
+        moviesBasicForActor = [];
+
+        filmography_div.find('div.filmo-row').filter(function(index,value) {
+            //console.log(event);
+            //console.log($(this));
+            //console.log($(this).children("b").find("a")
+            //console.log($(this).find('b a');
+            //console.log($(this).find("a"))
+            
+            
+            //need to use this method because it's only way to get the (TV Movie)...(TV Mini-Series)... elements
+            event = $(this).text().trim().replace(/\s\s+/g, ',').split(',');
+            //console.log(event);
+
+            //sometimes with new releases and there is no year specified, and this throws off element order in DOM
+            var year = $(this).find('span.year_column').text().trim();
+            //console.log(event,year);
+
+            //searches entire div filmo-row event for signs that it is not a movie
+            var isMovie = filterForMovie (event.join(","));
+            if (!year) {
+                year = "Unknown";
+                //most likely if year is unknown this is a speculated movie and actor role will be unknown as well
+                var actor_role = "Unknown";
+            }
+            
+            if (isMovie) {
+                
+                //getting the number of a tags under div filmo-row so we can access the last 'a' tag, which generally has character info
+                var a_num = $(this).find("a").length;
+
+                //console.log($(this).find("a"),a_num,$(this).find("a")[a_num-1].href);
+                
+                //only for actor roles
+                if (actor_role != "Unknown") {
+                    //only displaying actor roles for movies in which he/she is an actor/actress
+                    if (filmography == "Actor" || filmography == "Actress") {
+                        //checking to see if last 'a' tag truly describes the character
+                        if (/character/i.test($(this).find("a")[a_num-1].href)) {
+                            //actor_role = $(this).find("a")[a_num-1].text();
+                            actor_role = $(this).find("a")[a_num-1].text;
+                        
+                        //if the last 'a' tag doesn't describe character, it's usually at the end of div element
+                        } else  {
+                            //console.log('a_num less than 2, this is the last event element:' + event[event.length-1]);
+                            actor_role = event[event.length-1].replace(/\s\s+/g,' ');
+                        }
+                    } 
+                }
+                //pushing info to Basic Movie Array in JSON Object format
+                var jsonBasicInfo = {'Title':"",'Year':"",'imdbID':"",'Role':""};
+                jsonBasicInfo.Title = $(this).find('b a').text();
+                jsonBasicInfo.imdbID= $(this).find('b a').attr('href').split("/")[2];
+                jsonBasicInfo.Year = year;
+                jsonBasicInfo.Role = actor_role;
+                moviesBasicForActor.push(jsonBasicInfo); 
+                //console.log(jsonBasicInfo);        
+            }
+        })
+        //console.log(moviesBasicForActor.length);
+       
+        //creating div for loadMovie information       
+        var str = "<div class='loadMovieData'>";
+        
+        //load movie data button
+        str += "<button type='text' id='loadMovieDataButton' onClick='return loadMovieData(); return false'>Load All Movie Data</button><button type='text' id='stopMovieLoadButton' onClick='return stopMovieLoadFn(); return false'>Stop</button><progress id='progressBar' value='0' max='100' style='width:300px;'></progress><span id='status'></span>";
+        str += "</div>";
+        //<button type='text' id='getMovieBoxOfficeButton' onClick='return getMovieBoxOffice(); return false'>load Movie Box Office</button>
+        //console.log(moviesDataForActor);
+        
+        //console.log(actor);
+        //this is why actor needs to be global variable
+        str += "<div class='moviesForActor'><b>All Movies for "+actor+" in the filmography role of "+filmography+"</b></br>";
+        
+        //if there is an actor_role in moviesBasicArray, display it, ie only for Actor/Actress filmography roles
+        for (var movie in moviesBasicForActor) {
+            if (moviesBasicForActor[movie].Role) {
+                var role_str = " as " + moviesBasicForActor[movie].Role;
+            } else {
+                var role_str = "";
+            }
+            str += "<a href='#Exit' onClick='return displayMovieData(\"" + moviesBasicForActor[movie].imdbID + "\"); return false'>" + moviesBasicForActor[movie].Title + " (" + moviesBasicForActor[movie].Year + ")</a>"+role_str+"</br>"; 
+        }
+
+        //console.log(moviesBasicForActor);
+        str += "</div>";
+        //hide the progress Load elements
+        $("#progressBar").hide();
+        $("#stopMovieLoadButton").hide();
+        $("#main-display").html(str);
+    }
+
+    //getting and displaying filmography roles / buttons
+    function getFilmographyRolesForActor(actor_id) {
+        //clearing html so there's no repeat information
+        $("#main-display").empty();
+        
+        //clearing global variables
+        actor = "";
+        actor_id = actor_id;
+        $.ajax ({
+            type: "GET",
+            url: "imdb-fetcher2.php?actor_id=" + actor_id, // <-- request to PHP data fetcher
+            dataType: "html",
+            success: function(data) {
+                //console.log(data);
+    
+                //get actor info
+                actor = $(data).find('.header').text()
+
+                //this will get all sorts of roles the actor has dealt with
+                var ids = [];
+                $.map($(data).find("div#filmography > div"), function(child) {
+                    if (child.id != "") {
+                        ids.push(child.id);
+                    } 
+                }); 
+                //console.log(ids);
+
+                //display buttons to show other roles this actor has participated in
+                $("#filmography-buttons").html("<div class='filmographyRoles'>Filmography Roles for "+actor+"</div>");
+                
+                //creating buttons with different values passed for onclick function 
+                for (var id in ids) {
+                    //console.log($(data).find('#'+ids[id]).next());
+                    
+                    //filomorgraphy role, used later
+                    var filmography = $(data).find('#'+ids[id]).find('a').text();
+                    
+                    var button = document.createElement("button");
+                    button.innerHTML = filmography;
+                    button.onclick = function (id) {
+                        return function () {
+                            getBasicMovieArray($(data).find('#'+ids[id]).next(),$(data).find('#'+ids[id]).find('a').text());
+                            //alert(ids[id]);
+                        }
+                    } (id)
+                    $('.filmographyRoles').append(button);
+                }
+            }
+        })
+    }
+
+    //if user enters actor in search box
+    function actorSearch(actor) {
+         $.ajax ({
+          type: 'GET',
+          url: "imdb-fetcher.php?actor=" + actor, // <-- request to PHP data fetcher
+          dataType: "json",
+          success: function(data) {
+                //actor search results
+                var str = "<div class='actors'>";
+                var search_cats = JSON.stringify(data).match(/name_[^\"]+/g);
+                //console.log(search_cats);
+
+                //looping through each of the search categories
+                for (var cat in search_cats) {
+                    //displaying each category in bold with upper case first letter for each
+                    var title = search_cats[cat].split('_')[0][0].toUpperCase() + search_cats[cat].split('_')[0].substring(1) + " " + search_cats[cat].split('_')[1][0].toUpperCase() + search_cats[cat].split('_')[1].substring(1);
+                    
+                    //creating div for each search category
+                    str += "<div class='"+search_cats[cat]+"'><b>"+title+"</b></br>";
+                    $.each (data[search_cats[cat]],function (index,element) {
+                        str += "<a href='#Exit' onClick='return getFilmographyRolesForActor(\""+element.id+"\"); return false'>"+element.name+"</a></br>";
+                        //console.log(index,element.name,element.id);
+                    })
+                    str += "</div>";   
+                }
+                str += "</div>"; 
+    
+                // insert the html
+                $("#main-display").html(str);
+          }
+        });
+    }
+
+    //if user enters a movie in search box
+    function movieSearch(movie) {
+         $.ajax ({
+          type: 'GET',
+          url: "imdb-fetcher1.php?movie=" + movie, // <-- request to PHP data fetcher
+          dataType: "json",
+          success: function(data) {
+                //console.log(data);
+                //movie search results
+
+                var str = "<div class='movies'>";
+                //gets all categories except title_description
+                var search_cats = JSON.stringify(data).match(/title_[^d][^\"]+/g);
+                //console.log(search_cats);
+
+                //looping through each of the search categories
+                for (var cat in search_cats) {
+                    //displaying each category in bold with upper case first letter for each
+                    var title = search_cats[cat].split('_')[0][0].toUpperCase() + search_cats[cat].split('_')[0].substring(1) + " " + search_cats[cat].split('_')[1][0].toUpperCase() + search_cats[cat].split('_')[1].substring(1);
+                    
+                    //creating div for each search category
+                    str += "<div class='"+search_cats[cat]+"'><b>"+title+"</b></br>";
+                    $.each (data[search_cats[cat]],function (index,element) {
+                        str += "<a href='#Exit' onClick='return displayMovieData(\""+element.id+"\"); return false'>"+element.title+"</a></br>";
+                        //console.log(index,element.name,element.id);
+                    })
+                    str += "</div>";   
+                }
+                str += "</div>"; 
+    
+                // insert the html
+                $("#main-display").html(str);
+           }
+        })
+    }
+    </script>
+</head>
+<body>
+
+
+
+<!-- table for displaying data , removed border: border="1"-->
+<table id="data" >
+
+<!-- Row for general menu items-->
+<tr id="menu-items">
+<td colspan="2">
+<!-- search movie title textbox -->
+<input type="text" id="movie" placeholder="Enter Movie for Search">
+<!-- movie search button -->
+<button type="text" id="movieSearchButton">Search</button>
+<!-- search actor textbox -->
+<input type="text" id="actor" placeholder="Enter Actor for Search">
+<!-- actor search button -->
+<button type="text" id="actorSearchButton">Search</button>
+<!--Filmography buttons-->
+<div id="filmography-buttons"></div>
+<!--Progress bar for displaying movie load progress-->
+</td>
+</tr>
+
+<!-- Row for general displaying search results and popup displays-->
+<tr id="movies-display">
+<td>
+<!-- for loading movie data -->
+<span class="progressBar" id="pb1"></span>
+<!-- display results container -->
+<div id="main-display"></div>
+</td>
+<td width="40%">
+<!-- popup display -->
+<div id="popup" style="hidden"></div>
+</td>
+</tr>
+</table>
+</body>
+
+</html>
+
+
