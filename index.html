@@ -12,17 +12,7 @@
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.min.js"></script>
     <script type="text/javascript" language="javascript">
     $(document).ready(function() {
-        /*
-        window.onload = function () {
-            
-        }
-        */
-        var iframe = "<iframe src='./comment_frame.php?id=$id' frameborder='0' style='max-height:150px; height:auto;width:90%;min-height:10px;'></iframe>";
-
         $("#movieSearchButton").click(function() {
-            //var movie_query = $("#movie").val();
-            //logInToIMDB();
-            console.log($("#movie").val());
             if ($("#movie").val()) {
                 movieSearch($("#movie").val());
             } else {
@@ -30,7 +20,6 @@
             }
         })
         $("#actorSearchButton").click(function() {
-            //var actor_query = $("#actor").val();
             if ($("#actor").val()) {
                 actorSearch($("#actor").val());
             } else {
@@ -44,6 +33,9 @@
     //Providing different values for onclick function in for loop
     //pushing contents of a div to a function and parsing through the contents of the div
 
+    //App info
+    //Currently not using box office functionality
+
     //Global Variables
     var moviesBasicForActor = [];
     var moviesDataForActor = [];
@@ -51,48 +43,13 @@
     var actor_id = "";
     var stopMovieLoad = false;
     var user_id = "";
+
     
-    //getting log in information for user
-    function createCORSRequest(method, url){
-        document.domain = "imdb.com";
-        var xhr = new XMLHttpRequest();
-        if ("withCredentials" in xhr){
-            xhr.open(method, url, true);
-        } else if (typeof XDomainRequest != "undefined"){
-            xhr = new XDomainRequest();
-            xhr.open(method, url);
-        } else {
-            xhr = null;
-        }
-        return xhr;
-    }
 
-    var request = createCORSRequest("get", "http://www.stackoverflow.com/");
-    if (request){
-        request.onload = function() {
-            // ...
-        };
-        request.onreadystatechange = true;
-        request.send();
-    }
-        /*
-    function logInToIMDB () {
-        $.ajax ({
-            type: 'POST',
-            url: 'https://secure.imdb.com/register-imdb/login?ref_=nv_usr_lgin_1',
-            dataType: 'html',
-            success: function(data) {
-                $(data).find('#usernameprompt').value('hello');
-                console.log($(data).find('#usernameprompt'));
-            }
-        })
-    }
-        */
-
-    //getting movie gross
-    //button will create a new category in moviesDataForActor called Box Office and populate it for each movie
-
+    //Unused in this iteration
     function getMovieBoxOffice (movie_id) {
+        //getting movie gross
+        //button will create a new category in moviesDataForActor called Box Office and populate it for each movie
         var result = "";
         $.ajax ({
             type: 'GET',
@@ -101,14 +58,8 @@
             dataType: "html",
             success: function(data) { 
                 //console.log(data);
-                //output contents of div topphim
-                //console.log("below is the main div in which the film name title is in");
-                //console.log($(data).find('div#titleDetails'));
-                //console.log($(data).find(".topphim"));
-                //console.log($(data).find("cite._Rm").find("b")[0]);
                 console.log("below is the filmname, if this is present then there is a movie available");
                 event = $(data).find('div#titleDetails').text().trim().replace(/\s\s+/g, ' ');
-                //console.log(event);
                 //finding the amount value by looking for Grosss
                 var grossBoxOffice = event.match(/Gross:\s*[^\d]*[\d|,]*/i)[0];
                 //taking out the Gross part
@@ -119,19 +70,15 @@
                     console.log(child.text());
                 };
                 */
-                //console.log($(data).find(".FilmName"));
-                //console.log("below should show if there are no movie results");
-                //console.log($(data).find(".topphim").find("center").text());
-                //console.log("below should show if there are movie results");
-                //console.log($(data).find(".topphim").find(".FilmName"));
             }
         })
         return result;
     }
 
-    //getMovieShare movie
-    //issue with getting info from movieshare.info, just brings me to main page, not the search results page
+    //Unused in this iteration
     function getMovieShare (movie_title) {
+        //getMovieShare movie to stream online for free
+        //issue with getting info from movieshare.info, just brings me to main page, not the search results page
         $.ajax ({
             type: 'GET',
             url: "imdb-fetcher6.php?movie_title=" + movie_title, // <-- request to PHP data fetcher
@@ -196,7 +143,7 @@
     function displayMovieData(movie_id) {
         var movieDataJson = getMovieData(movie_id);
         //also want to get movie box office for the movie
-        movieDataJson.BoxOffice = getMovieBoxOffice(movie_id);
+        //movieDataJson.BoxOffice = getMovieBoxOffice(movie_id);
         //creating movieData div that will hold everything
         var str = "<div id='movieData' ><b>Movie Data</b>";
         //adding poster image floating right
@@ -221,11 +168,12 @@
        
     }
 
-    //sorting by gross box office revenue
+    //Unused in this iteration
     function sortByBoxOffice() {
+        //sorting by gross box office revenue
         //removing the div if already there
         $(".moviesSortedByRating").remove();
-        $(".moviesSortedByBoxOffice").remove();
+        //$(".moviesSortedByBoxOffice").remove();
 
         //sorting movie by imdbRating
         moviesDataForActor.sort(function(a,b) {
@@ -234,7 +182,7 @@
         //console.log(moviesDataForActor);
         
         //creating div for moviesSort
-        var str = "<div class='moviesSortedByBoxOffice'><b>Movies Sorted by Gross Box Office Amount, "+actor+"</b></br>";
+        //var str = "<div class='moviesSortedByBoxOffice'><b>Movies Sorted by Gross Box Office Amount, "+actor+"</b></br>";
         
         //displaying moviesDataForActor
         moviesDataForActor.map(function(value) {
@@ -247,8 +195,8 @@
     }
 
 
-    //sorting by imdb rating
     function sortByRating() {
+        //sorting by imdb rating
         //removing the div if already there
         $(".moviesSortedByRating").remove();
 
@@ -271,13 +219,13 @@
         $(".moviesForActor").html(str);
     }
 
-    //stoping the movie Load
     function stopMovieLoadFn() {
+        //stoping the movie Load
         stopMovieLoad = true;
     }
 
-    //loading movieData
     function loadMovieData() {
+        //loading movieData
 
         //setting movie counter to 0
         var counter=0;
@@ -307,7 +255,10 @@
                 //creating sort buttons
                 var button = "<div class='sortButtons'>";
                 //sort by rating
-                button += "<button type='text' id='movieSortByRating' onclick='sortByRating()'>Sort by IMDB Rating</button><button type='text' id='moviesSortByBoxOffice' onclick='sortByBoxOffice()'>Sort by Gross Box Office</button>";
+                button += "<button type='text' id='movieSortByRating' onclick='sortByRating()'>Sort by IMDB Rating</button>";
+
+                //Sorting by box office, not used here
+                //<button type='text' id='moviesSortByBoxOffice' onclick='sortByBoxOffice()'>Sort by Gross Box Office</button>";
                 
                 button+= "</div>";
                 //if stop load button has been pressed 
@@ -334,9 +285,9 @@
         })();
     }
         
-    //filtering out all of the titles that are not movies
-    //TV Series, TV Mini-Series, Video Game, (... short), TV Movie, Video
     function filterForMovie (movie_div_text) {
+        //filtering out all of the titles that are not movies
+        //TV Series, TV Mini-Series, Video Game, (... short), TV Movie, Video
         if (movie_div_text.match(/TV Series/i) == null && movie_div_text.match(/TV Mini-Series/i) == null && movie_div_text.match(/Video Game/i) == null && movie_div_text.match(/\(\w*\s*short\)/i) == null && movie_div_text.match(/TV Movie/i) == null && movie_div_text.match(/\(Video\)/i) == null) {
             return true;
         } else {
@@ -344,8 +295,8 @@
         }
     }
     
-    //this will display html movie results, inputs are div element and filmography string (ie Actor, Soundtrack...)
     function getBasicMovieArray (filmography_div,filmography) {
+    //this will display html movie results, inputs are div element and filmography string (ie Actor, Soundtrack...)
         
         //clearing out existing stuff
         $('.loadMovieData').remove();
@@ -356,7 +307,6 @@
 
         filmography_div.find('div.filmo-row').filter(function(index,value) {
             //console.log(event);
-            //console.log($(this));
             //console.log($(this).children("b").find("a")
             //console.log($(this).find('b a');
             //console.log($(this).find("a"))
@@ -444,8 +394,8 @@
         $("#main-display").html(str);
     }
 
-    //getting and displaying filmography roles / buttons
     function getFilmographyRolesForActor(actor_id) {
+        //getting and displaying filmography roles / buttons
         //clearing html so there's no repeat information
         $("#main-display").empty();
         
@@ -495,8 +445,8 @@
         })
     }
 
-    //if user enters actor in search box
     function actorSearch(actor) {
+        //if user enters actor in search box
          $.ajax ({
           type: 'GET',
           url: "imdb-fetcher.php?actor=" + actor, // <-- request to PHP data fetcher
@@ -528,8 +478,8 @@
         });
     }
 
-    //if user enters a movie in search box
     function movieSearch(movie) {
+        //if user enters a movie in search box
          $.ajax ({
           type: 'GET',
           url: "imdb-fetcher1.php?movie=" + movie, // <-- request to PHP data fetcher

@@ -1,1 +1,4 @@
 # IMDB_Project
+This is a project that scrapes various IMDB api's and websites to allow you a more clear way of searching for movies. You can search by actor or movie to get a better idea of what movie you want to watch that evening. For example, if you have been on a Mark Wahlberg phase, you can search for movies that he stars in as an actor, or that he has produced or directed. Further, you can sort the search results by IMDB rating, and if you click on a movie you will get the movie information along with a link to the trailer.
+
+This project can be run on a Mac with MAMP and on Windows with WAMP.
